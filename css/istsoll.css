@@ -1,0 +1,85 @@
+
+#is-options {
+	float: right;
+	margin-bottom: 3em;
+}
+
+#is-drilldown {
+	width: 300px;
+}
+
+#is-year {
+	width: 6em;
+	margin-right: 1em;
+}
+
+#is-vis {
+	width: 840px;
+	margin-left: 50px;
+}
+
+#is-vis #preloader {
+	text-align: center;
+	margin-top: 3em;
+	width: 100%;
+	clear: both;
+}
+
+#is-vis #preloader img {
+	vertical-align: top;
+	
+}
+
+#is-vis .is-row {
+	clear: both;
+	height: 17px;
+	position: relative;
+}
+
+#is-vis .is-row .lbl {
+	font-family: OpenSansLight, "Helvetica Neue", Arial;
+	font-size: 11px;
+	position: absolute;
+	top: 0px;
+	height: 19px;
+	overflow: hidden;
+}
+
+#is-vis .is-row .bar {
+	position: absolute;
+	top: 7px;
+	height: 10px;
+}
+
+#is-vis .is-row.active .bar {
+	background: #78A279;
+}
+
+#is-vis .is-row.passive .bar {
+	background: #C45C5E;
+}
+
+#is-vis .is-row.active .lbl {
+	margin-left: 1em;
+}
+
+#is-vis .is-row.passive .lbl {
+	margin-right: 1em;
+	text-align: right;
+}
+
+#is-vis .is-row .lbl.diff {
+	width: 100px;
+}
+
+#is-vis .is-row.active .lbl.diff {
+	color: #517552;
+	margin-right: 6px;
+	text-align: right;
+}
+
+#is-vis .is-row.passive .lbl.diff {
+	color: #9F3D3F;
+	margin-left: 6px;
+	text-align: left;
+}

@@ -1,0 +1,169 @@
+---
+layout: default
+title: IST–SOLL Vergleich
+---
+	
+<script type="text/javascript">
+(function ($) {
+
+  window.wdmmg_cramap = {};
+  
+  var 
+  endpoint = 'http://openspending.org/api/2/',
+  dataset = 'de-bund',
+  drilldowns = ['einzelplan','titel'],
+  AB_dim = 'financial_type',
+  AB = ['Ansatz', 'Ist'];
+  
+  yepnope.errorTimeout = 1000;
+
+  yepnope([
+ //  { load: 'http://assets.openspending.org/openspendingjs/master/lib/vendor/raphael-min.js' },	
+ //  { load: 'http://assets.openspending.org/openspendingjs/master/lib/aggregator.js' },	
+   { load: 'http://assets.openspending.org/openspendingjs/master/lib/vendor/jquery.history.js' },	
+   { load: 'css/istsoll.css' },
+   { load: 'js/libs/chroma.js' },
+   { load: 'js/libs/jquery.qtip.min.js',
+     complete: function() {
+        
+        function _api(params, callback) {
+        	$.ajax({
+        		url: endpoint+'aggregate?dataset='+dataset+'&'+params,
+        		dataType: 'jsonp',
+        		success: callback
+        	});
+        }
+        
+		function load_l1() {
+			_api('drilldown='+drilldowns[0], function(d) {
+				// populate select
+				$('#is-options').show();
+				var s = $('select#is-drilldown');
+				$.each(d.drilldown, function(i, e) {
+					if (e.amount == 0) return;
+					s.append('<option value="'+e[drilldowns[0]].id+'">'+e[drilldowns[0]].label+'</option>');
+				});
+				s.change(run);
+				run();
+			});
+		}
+		
+		function run() {
+			var data = {};
+			load_l2(data, AB[0]);
+			load_l2(data, AB[1]);
+		}
+		
+		function load_l2(data, type) {
+		
+			$('#is-vis').html('<div id="preloader"><img src="img/ajax-loader.gif" alt="" /> Lade Daten...</div>');
+			var yr = $('#is-year').val(),
+				ep = $('#is-drilldown').val(),
+				cut = 'year:'+yr+'|'+AB_dim+':'+type+'|flow:spending|'+drilldowns[0]+':'+ep;
+			_api('drilldown='+drilldowns[1]+'&cut='+cut, function(d) {
+				data[type] = {};
+				data.meta = data.meta || {};
+				$.each(d.drilldown, function(i,e) {
+					data[type][e[drilldowns[1]].id] = e.amount;
+					data.meta[e[drilldowns[1]].id] = e[drilldowns[1]];
+				});
+				data_loaded(data)
+			});
+		}
+		
+		function data_loaded(data) {
+			if (data[AB[0]] && data[AB[1]]) {
+				run_vis(data);
+			}
+		}
+		
+		function run_vis(data) {
+			var v = $('#is-vis'), 
+			width = v.width(),
+			center, delta,
+			rows = [], 
+			range = [0,0];
+
+			$.each(data.meta, function(id, m) {
+				var row = { id: id, label: m.label };
+				row[AB[0]] = data[AB[0]][id];
+				row[AB[1]] = data[AB[1]][id];
+				row.diff = row[AB[1]]-row[AB[0]];
+				if (!isNaN(row.diff)) {
+					range[0] = Math.min(range[0], row.diff);
+					range[1] = Math.max(range[1], row.diff);
+					rows.push(row);				
+				}		
+			});
+			
+			if (rows.length == 0) {
+				$('#preloader').html('Konnte keine Differenzen berechnen..');
+				return;
+			}
+			
+			v.html('');
+			
+			rows.sort(function(a,b) {
+				return b.diff-a.diff;
+			});
+			delta = range[1]-range[0];
+			center = width * Math.abs(range[0]) / delta;
+			if (delta == 0) center = width*0.5;
+			
+			function fmt(diff) {
+				var a = Math.abs(diff);
+				if (a >= 1000000) a = (Math.round(a/100000)/10)+' Mio.';
+				else if (a >= 1000) a = (Math.round(a/100)/10)+' Tsd.';
+				return (diff > 0 ? '+' : '-')+a;
+			}
+			
+			// now visualize
+			$.each(rows, function(i,row) {
+				if (isNaN(row.diff)) return;
+				if (row[AB[0]] == 0 && row[AB[1]] == 0) return;
+				//if (Math.abs(row.diff) < 100) return;
+				var 
+				r = $('<div class="is-row '+(row.diff > 0 ? 'passive' : 'active')+'" />'),
+				b = $('<div class="bar" />'),
+				l = $('<div class="lbl">'+row.label+'</div>'),
+				d = $('<div class="lbl diff">'+fmt(row.diff)+'</div>'),
+				w = Math.max(1,Math.abs(row.diff / delta)*width);
+				
+				if (delta == 0) w = 1;
+				
+				r.append(l);
+				r.append(b);
+				r.append(d);
+				v.append(r);
+
+				l.css(row.diff > 0 ? 
+					{ right: (width-center)+'px', width: center+'px' } : 
+					{ left: center+'px', width: (center-width)+'px' });
+				d.css(row.diff > 0 ? { left: (center+w)+'px' } : { right: (width-center+w)+'px' } );
+				b.css(row.diff < 0 ? { right: (width-center)+'px' } : { left: center+'px' });
+				b.css({ width: w+'px' });
+			});
+		}
+		
+		load_l1();
+     }
+   }
+  ]); // yepnope()   
+})(jQuery)
+</script>
+    
+    
+<div id="istsoll">
+	<div id="is-head">
+		<div id="is-options" style="display:none">
+			Jahr <select id="is-year"><option selected="selected">2009</option></select>
+			Einzelplan <select id="is-drilldown"></select>
+		</div>
+		<h1>IST/SOLL Vergleich</h1>
+		<div id="is-vis">
+			<div id="preloader"><img src="img/ajax-loader.gif" alt="" /> Lade Daten...</div>
+		</div>
+	</div>
+
+</div><!-- /#istsoll -->
+
