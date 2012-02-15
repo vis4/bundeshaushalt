@@ -13,7 +13,23 @@ title: IST–SOLL Vergleich
   dataset = 'de-bund',
   drilldowns = ['einzelplan','titel'],
   AB_dim = 'financial_type',
-  AB = ['Ansatz', 'Ist'];
+  AB = ['Ansatz', 'Ist'],
+  api_cache = {};
+  
+  function _api(params, callback) {
+		if (api_cache[params]) {
+			callback(api_cache[params]);
+			return;
+		}
+		$.ajax({
+			url: endpoint+'aggregate?dataset='+dataset+'&'+params,
+			dataType: 'jsonp',
+			success: function(content) {
+				api_cache[params] = content;
+				callback(content);
+			}
+		});
+	}
   
   yepnope.errorTimeout = 1000;
 
@@ -32,13 +48,7 @@ title: IST–SOLL Vergleich
         	s.append('<option>'+yr+'</option>');
         });
         
-        function _api(params, callback) {
-        	$.ajax({
-        		url: endpoint+'aggregate?dataset='+dataset+'&'+params,
-        		dataType: 'jsonp',
-        		success: callback
-        	});
-        }
+        $('#is-drilldown').append('<option value="-">Übersicht</option>');
         
         $.history.init(function(hash){
 			if (hash == "") {
@@ -46,6 +56,14 @@ title: IST–SOLL Vergleich
 			} else {
 				// restore the state from hash
 				var m = hash.match(/\/(.+)\/(.+)\//);
+				if (m === null) {
+					m = hash.match(/\/(.+)\//);
+					if (m !== null) m.push('-');
+					else {
+						$('#preloader').html('Unbekannte URL');
+						return;
+					}
+				}
 				$('#is-year').val(m[1]);
 				$('#is-drilldown').val(m[2]);
 				$('#is-drilldown').data('sel', m[2]);
@@ -55,7 +73,8 @@ title: IST–SOLL Vergleich
 
 
         function update() {
-			var hash = '#/'+$('#is-year').val()+'/'+$('#is-drilldown').val()+'/';
+			var hash = '#/'+$('#is-year').val()+'/';
+			if ($('#is-drilldown').val() != '-') hash+=$('#is-drilldown').val()+'/';
 			window.location.href = hash;
         }
         
