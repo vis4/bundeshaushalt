@@ -14,7 +14,8 @@ title: IST–SOLL Vergleich
   drilldowns = ['einzelplan','titel'],
   AB_dim = 'financial_type',
   AB = ['Ansatz', 'Ist'],
-  api_cache = {};
+  api_cache = {},
+  top_flop_cnt = 10;
   
   function _api(params, callback) {
 		if (api_cache[params]) {
@@ -157,7 +158,7 @@ title: IST–SOLL Vergleich
 				return b.diff-a.diff;
 			});
 			delta = range[1]-range[0];
-			center = width * Math.abs(range[0]) / delta;
+			center = width*0.2 + (width*0.6) * Math.abs(range[0]) / delta;
 			if (delta == 0) center = width*0.5;
 			
 			function fmt(diff) {
@@ -170,15 +171,30 @@ title: IST–SOLL Vergleich
 			
 			// now visualize
 			$.each(rows, function(i,row) {
-				if (isNaN(row.diff)) return;
-				if (row[AB[0]] == 0 && row[AB[1]] == 0) return;
 				
 				var 
-				r = $('<div class="is-row '+(row.diff > 0 ? 'passive' : 'active')+(odd ? ' odd' : '')+'" />'),
+				r = $('<div class="is-row" />'),
 				b = $('<div class="bar" />'),
 				l = $('<div class="lbl" title="'+row.label+'">'+row.label+'</div>'),
 				d = $('<div class="lbl diff">'+fmt(row.diff)+'</div>'),
-				w = Math.max(1,Math.abs(row.diff / delta)*width);
+				w = Math.max(1,Math.abs(row.diff / delta)*width*0.75);
+				
+				r.addClass(row.diff > 0 ? 'passive' : 'active');
+				if (odd) r.addClass('odd');
+				if (!((i < top_flop_cnt) || (i >= rows.length - top_flop_cnt))) {
+					r.addClass('hide');
+					if (i == top_flop_cnt) {
+						var exp = $('<div class="row-exp">Zeige '+(rows.length - top_flop_cnt*2)+' weitere Haushaltsposten</div>');
+						v.append(exp);
+						exp.hide();
+						exp.click(function() {
+							exp.hide();
+							$('.is-row.hide').show();
+						});
+						exp.delay(delay).show(200);
+						delay += d_vel;
+					}
+				}
 				
 				odd = !odd;
 				
@@ -188,9 +204,12 @@ title: IST–SOLL Vergleich
 				r.append(b);
 				r.append(d);
 				r.hide();
-				r.delay(delay).show(d_vel > 0 ? 250 : 0);
-				delay += d_vel;
-				d_vel *= 0.97;
+				
+				if (!r.hasClass('hide')) {
+					r.delay(delay).show(d_vel > 0 ? 250 : 0);
+					delay += d_vel;
+					d_vel *= 0.97;
+				}
 				v.append(r);
 
 				l.css(row.diff > 0 ? 

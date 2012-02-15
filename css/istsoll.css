@@ -15,8 +15,8 @@
 }
 
 #is-vis {
-	width: 840px;
-	margin-left: 50px;
+	width: 940px;
+	margin-left: 0px;
 }
 
 #is-vis h2 {
@@ -37,9 +37,25 @@
 	
 }
 
+#is-vis .row-exp {
+	margin: 1em 12em;
+	padding: 7px;
+	text-align: center;
+	font-style: italic;
+	color: #777;
+	border-top: 1px solid #C45C5E;
+	border-bottom: 1px solid #78A279;
+	cursor: pointer;
+}
+
+#is-vis .row-exp:hover {
+	color: #830242;
+	text-decoration: underline;
+}
+
 #is-vis .is-row {
 	clear: both;
-	height: 19px;
+	height: 24px;
 	position: relative;
 	border-radius: 7px;
 }
@@ -50,18 +66,18 @@
 
 #is-vis .is-row .lbl {
 	font-family: OpenSansLight, "Helvetica Neue", Arial;
-	font-size: 11px;
+	font-size: 13px;
 	position: absolute;
 	top: 0px;
-	height: 19px;
+	height: 24px;
 	overflow: hidden;
-	line-height: 20px;
+	line-height: 25px;
 }
 
 #is-vis .is-row .bar {
 	position: absolute;
 	top: 5px;
-	height: 10px;
+	height: 14px;
 }
 
 #is-vis .is-row.active .bar {
