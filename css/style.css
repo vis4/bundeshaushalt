@@ -45,12 +45,12 @@ a {
 }
 
 #logo {
-  padding-top: 1em;
+  padding-top: 2em;
   padding-bottom: 0em;
 }
 
 #logo #claim {
-  margin-top: -10px;
+  margin-top: 5px;
   font-style: italic;
   /*letter-spacing: 1px;*/
   color: #999999;
