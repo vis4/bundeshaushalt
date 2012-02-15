@@ -40,19 +40,39 @@ title: IST–SOLL Vergleich
         	});
         }
         
+        $.history.init(function(hash){
+			if (hash == "") {
+				// initialize your app
+			} else {
+				// restore the state from hash
+				var m = hash.match(/\/(.+)\/(.+)\//);
+				$('#is-year').val(m[1]);
+				$('#is-drilldown').val(m[2]);
+				$('#is-drilldown').data('sel', m[2]);
+				run();
+			}
+		}, { unescape: ",/" });
+
+
+        function update() {
+			var hash = '#/'+$('#is-year').val()+'/'+$('#is-drilldown').val()+'/';
+			window.location.href = hash;
+        }
+        
         var dd_meta = {};
         
 		function load_l1() {
 			_api('drilldown='+drilldowns[0], function(d) {
 				// populate select
 				$('#is-options').show();
-				s = $('select#is-drilldown');
+				s = $('#is-drilldown');
 				$.each(d.drilldown, function(i, e) {
 					if (e.amount == 0) return;
 					s.append('<option value="'+e[drilldowns[0]].name+'">'+e[drilldowns[0]].label+'</option>');
 					dd_meta[e[drilldowns[0]].name] = e[drilldowns[0]].label;
 				});
-				s.change(run);
+				if (s.data('sel')) s.val(s.data('sel'));
+				s.change(update);
 				run();
 			});
 		}
@@ -63,7 +83,7 @@ title: IST–SOLL Vergleich
 			load_l2(data, AB[1]);
 		}
 		
-		s.change(run);
+		s.change(update);
 		
 		function load_l2(data, type) {
 		
