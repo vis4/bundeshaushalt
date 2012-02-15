@@ -34,13 +34,13 @@ title: IST–SOLL Vergleich
   yepnope.errorTimeout = 1000;
 
   yepnope([
- //  { load: 'http://assets.openspending.org/openspendingjs/master/lib/vendor/raphael-min.js' },	
- //  { load: 'http://assets.openspending.org/openspendingjs/master/lib/aggregator.js' },	
+ // { load: 'http://assets.openspending.org/openspendingjs/master/lib/vendor/raphael-min.js' },	
+ // { load: 'http://assets.openspending.org/openspendingjs/master/lib/aggregator.js' },	
+ // { load: 'css/tooltips.css' },
+ // { load: 'js/libs/jquery.qtip.min.js' }
    { load: 'http://assets.openspending.org/openspendingjs/master/lib/vendor/jquery.history.js' },	
-   { load: 'css/istsoll.css' },
-   { load: 'js/libs/chroma.js' },
-   { load: 'js/libs/jquery.qtip.min.js',
-     complete: function() {
+   { load: 'css/istsoll.css',
+    complete: function() {
         
         var s = $('#is-year');
         
@@ -130,7 +130,7 @@ title: IST–SOLL Vergleich
 		function run_vis(data) {
 			var v = $('#is-vis'), 
 			width = v.width(),
-			center, delta, odd = true,
+			center, delta, odd = true, delay = 0, d_vel = 50,
 			rows = [], 
 			range = [0,0];
 
@@ -187,6 +187,10 @@ title: IST–SOLL Vergleich
 				r.append(l);
 				r.append(b);
 				r.append(d);
+				r.hide();
+				r.delay(delay).show(d_vel > 0 ? 250 : 0);
+				delay += d_vel;
+				d_vel *= 0.97;
 				v.append(r);
 
 				l.css(row.diff > 0 ? 
