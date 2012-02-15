@@ -1,7 +1,8 @@
 
+
 #is-options {
 	float: right;
-	margin-bottom: 3em;
+	margin-bottom: 2.5em;
 }
 
 #is-drilldown {
@@ -16,6 +17,12 @@
 #is-vis {
 	width: 840px;
 	margin-left: 50px;
+}
+
+#is-vis h2 {
+	text-align: center;
+	clear: both;
+	margin: 1em 0;
 }
 
 #is-vis #preloader {

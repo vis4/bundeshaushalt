@@ -26,6 +26,12 @@ title: IST–SOLL Vergleich
    { load: 'js/libs/jquery.qtip.min.js',
      complete: function() {
         
+        var s = $('#is-year');
+        
+        $.each([2009,2008,2007,2006], function(i,yr) {
+        	s.append('<option>'+yr+'</option>');
+        });
+        
         function _api(params, callback) {
         	$.ajax({
         		url: endpoint+'aggregate?dataset='+dataset+'&'+params,
@@ -34,14 +40,17 @@ title: IST–SOLL Vergleich
         	});
         }
         
+        var dd_meta = {};
+        
 		function load_l1() {
 			_api('drilldown='+drilldowns[0], function(d) {
 				// populate select
 				$('#is-options').show();
-				var s = $('select#is-drilldown');
+				s = $('select#is-drilldown');
 				$.each(d.drilldown, function(i, e) {
 					if (e.amount == 0) return;
-					s.append('<option value="'+e[drilldowns[0]].id+'">'+e[drilldowns[0]].label+'</option>');
+					s.append('<option value="'+e[drilldowns[0]].name+'">'+e[drilldowns[0]].label+'</option>');
+					dd_meta[e[drilldowns[0]].name] = e[drilldowns[0]].label;
 				});
 				s.change(run);
 				run();
@@ -54,12 +63,14 @@ title: IST–SOLL Vergleich
 			load_l2(data, AB[1]);
 		}
 		
+		s.change(run);
+		
 		function load_l2(data, type) {
 		
 			$('#is-vis').html('<div id="preloader"><img src="img/ajax-loader.gif" alt="" /> Lade Daten...</div>');
 			var yr = $('#is-year').val(),
 				ep = $('#is-drilldown').val(),
-				cut = 'year:'+yr+'|'+AB_dim+':'+type+'|flow:spending|'+drilldowns[0]+':'+ep;
+				cut = 'year:'+yr+'|'+AB_dim+':'+type+'|flow:spending|'+drilldowns[0]+'.name:'+ep;
 			_api('drilldown='+drilldowns[1]+'&cut='+cut, function(d) {
 				data[type] = {};
 				data.meta = data.meta || {};
@@ -101,7 +112,7 @@ title: IST–SOLL Vergleich
 				return;
 			}
 			
-			v.html('');
+			v.html('<h2>'+dd_meta[$('#is-drilldown').val()]+'</h2>');
 			
 			rows.sort(function(a,b) {
 				return b.diff-a.diff;
@@ -112,7 +123,8 @@ title: IST–SOLL Vergleich
 			
 			function fmt(diff) {
 				var a = Math.abs(diff);
-				if (a >= 1000000) a = (Math.round(a/100000)/10)+' Mio.';
+				if (a >= 1000000000) a = (Math.round(a/100000000)/10)+' Mrd.';
+				else if (a >= 1000000) a = (Math.round(a/100000)/10)+' Mio.';
 				else if (a >= 1000) a = (Math.round(a/100)/10)+' Tsd.';
 				return (diff > 0 ? '+' : '-')+a;
 			}
@@ -125,7 +137,7 @@ title: IST–SOLL Vergleich
 				var 
 				r = $('<div class="is-row '+(row.diff > 0 ? 'passive' : 'active')+'" />'),
 				b = $('<div class="bar" />'),
-				l = $('<div class="lbl">'+row.label+'</div>'),
+				l = $('<div class="lbl" title="'+row.label+'">'+row.label+'</div>'),
 				d = $('<div class="lbl diff">'+fmt(row.diff)+'</div>'),
 				w = Math.max(1,Math.abs(row.diff / delta)*width);
 				
@@ -156,10 +168,10 @@ title: IST–SOLL Vergleich
 <div id="istsoll">
 	<div id="is-head">
 		<div id="is-options" style="display:none">
-			Jahr <select id="is-year"><option selected="selected">2009</option></select>
+			Jahr <select id="is-year"></select>
 			Einzelplan <select id="is-drilldown"></select>
 		</div>
-		<h1>IST/SOLL Vergleich</h1>
+		<h1>IST vs. SOLL</h1>
 		<div id="is-vis">
 			<div id="preloader"><img src="img/ajax-loader.gif" alt="" /> Lade Daten...</div>
 		</div>
