@@ -111,7 +111,7 @@ title: IST–SOLL Vergleich
 		function run_vis(data) {
 			var v = $('#is-vis'), 
 			width = v.width(),
-			center, delta,
+			center, delta, odd = true,
 			rows = [], 
 			range = [0,0];
 
@@ -153,13 +153,15 @@ title: IST–SOLL Vergleich
 			$.each(rows, function(i,row) {
 				if (isNaN(row.diff)) return;
 				if (row[AB[0]] == 0 && row[AB[1]] == 0) return;
-				//if (Math.abs(row.diff) < 100) return;
+				
 				var 
-				r = $('<div class="is-row '+(row.diff > 0 ? 'passive' : 'active')+'" />'),
+				r = $('<div class="is-row '+(row.diff > 0 ? 'passive' : 'active')+(odd ? ' odd' : '')+'" />'),
 				b = $('<div class="bar" />'),
 				l = $('<div class="lbl" title="'+row.label+'">'+row.label+'</div>'),
 				d = $('<div class="lbl diff">'+fmt(row.diff)+'</div>'),
 				w = Math.max(1,Math.abs(row.diff / delta)*width);
+				
+				odd = !odd;
 				
 				if (delta == 0) w = 1;
 				

@@ -39,8 +39,13 @@
 
 #is-vis .is-row {
 	clear: both;
-	height: 17px;
+	height: 19px;
 	position: relative;
+	border-radius: 7px;
+}
+
+#is-vis .is-row.odd {
+	background: #f4f4f4;
 }
 
 #is-vis .is-row .lbl {
@@ -50,11 +55,12 @@
 	top: 0px;
 	height: 19px;
 	overflow: hidden;
+	line-height: 20px;
 }
 
 #is-vis .is-row .bar {
 	position: absolute;
-	top: 7px;
+	top: 5px;
 	height: 10px;
 }
 
