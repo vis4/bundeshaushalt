@@ -108,7 +108,16 @@ footer a, footer a:hover {
   color: #AEEBDF;
 }
 
+.index-column {
+	width: 310px;
+	float: left;
+}
 
+.index-column p {
+	font-size: 14px;
+	line-height: 20px;
+	padding-right: 1em;
+}
 /* 
  * Visualization-specific styles. 
  */

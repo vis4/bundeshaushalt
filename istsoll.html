@@ -126,7 +126,7 @@ title: IST–SOLL Vergleich
 				if (a >= 1000000000) a = (Math.round(a/100000000)/10)+' Mrd.';
 				else if (a >= 1000000) a = (Math.round(a/100000)/10)+' Mio.';
 				else if (a >= 1000) a = (Math.round(a/100)/10)+' Tsd.';
-				return (diff > 0 ? '+' : '-')+a;
+				return (diff > 0 ? '+' : diff == 0 ? '+/-' : '-')+a;
 			}
 			
 			// now visualize
