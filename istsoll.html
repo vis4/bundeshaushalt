@@ -295,7 +295,7 @@ title: IST vs. SOLL
         
         r.addClass(row.diff > 0 ? 'passive' : 'active');
         if (odd) r.addClass('odd');
-        if (!((i < top_flop_cnt) || (i >= rows.length - top_flop_cnt))) {
+        if (rows.length > top_flop_cnt*2.4 && !((i < top_flop_cnt) || (i >= rows.length - top_flop_cnt))) {
           r.addClass('hide');
           if (i == top_flop_cnt) {
             var exp = $('<div class="row-exp">Zeige '+(rows.length - top_flop_cnt*2)+' weitere Haushaltsposten</div>');
