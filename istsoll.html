@@ -91,10 +91,11 @@ title: IST–SOLL Vergleich
         var dd_meta = {};
         
 		function load_l1() {
-			_api('drilldown='+drilldowns[0], function(d) {
+			_api('drilldown='+drilldowns[0]+'&order='+drilldowns[0]+'.label:asc', function(d) {
 				// populate select
 				$('#is-options').show();
 				s = $('#is-drilldown');
+				
 				$.each(d.drilldown, function(i, e) {
 					if (e.amount == 0) return;
 					s.append('<option value="'+e[drilldowns[0]].name+'">'+e[drilldowns[0]].label+'</option>');
@@ -151,7 +152,7 @@ title: IST–SOLL Vergleich
 				row[AB[0]] = data[AB[0]][id];
 				row[AB[1]] = data[AB[1]][id];
 				row.diff = row[AB[1]]-row[AB[0]];
-				if (!isNaN(row.diff)) {
+				if (!isNaN(row.diff) && !(row[AB[0]] == 0 && row[AB[1]] == 0)) {
 					range[0] = Math.min(range[0], row.diff);
 					range[1] = Math.max(range[1], row.diff);
 					rows.push(row);				
