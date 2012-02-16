@@ -20,6 +20,10 @@
 	width: 200px;
 }
 
+.chzn-container {
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
 #is-year {
 	width: 6em;
 	margin-right: 1em;
