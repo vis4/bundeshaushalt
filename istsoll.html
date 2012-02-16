@@ -38,23 +38,23 @@ title: IST vs. SOLL
    * format difference
    */
   function fmt(diff) {
-  var a = Math.abs(diff);
-  if (a >= 1000000000) a = (Math.round(a/100000000)/10)+' Mrd.';
-  else if (a >= 1000000) a = (Math.round(a/100000)/10)+' Mio.';
-  else if (a >= 1000) a = (Math.round(a/100)/10)+' Tsd.';
-  return (diff > 0 ? '+' : diff == 0 ? '+/-' : '-')+a;
+    var a = Math.abs(diff);
+    if (a >= 1000000000) a = (Math.round(a/100000000)/10)+' Mrd.';
+    else if (a >= 1000000) a = (Math.round(a/100000)/10)+' Mio.';
+    else if (a >= 1000) a = (Math.round(a/100)/10)+' Tsd.';
+    return (diff > 0 ? '+' : diff == 0 ? '+/-' : '-')+a;
   }
   
   /*
    * format total value (used in overlay)
    */
   function fmt_long(amount) {
-  var i,o='',a = String(Math.round(amount));
-  for (i=0; i<a.length; i++) {
-    if (i>0 && i%3==0) o='.'+o;
-    o=a[a.length-1-i]+o;
-  }
-  return '€ '+o+'';
+    var i,o='',a = String(Math.round(amount));
+    for (i=0; i<a.length; i++) {
+      if (i>0 && i%3==0) o='.'+o;
+      o=a[a.length-1-i]+o;
+    }
+    return '€ '+o+'';
   }  
   
   /*
@@ -62,19 +62,17 @@ title: IST vs. SOLL
    */
   function _init() {
         
-        // populate year select  
-        var s = $('#is-year');
-       $.each([2009,2008,2007,2006], function(i,yr) {
-          s.append('<option>'+yr+'</option>');
-        });
+    // populate year select  
+    var s = $('#is-year');
+    $.each([2009,2008,2007,2006], function(i,yr) {
+      s.append('<option>'+yr+'</option>');
+    });
         
-        $('#is-drilldown').append('<option value="-">Übersicht</option>');
+    $('#is-drilldown').append('<option value="-">Übersicht</option>');
         
-        // configure jquery.history for hash url handling
-        $.history.init(function(hash){
-      if (hash == "") {
-        // initialize your app
-      } else {
+    // configure jquery.history for hash url handling
+    $.history.init(function(hash){
+      if (hash != "") {
         // restore the state from hash
         var m = hash.match(/\/(.+)\/(.+)\//);
         if (m === null) {
@@ -95,18 +93,19 @@ title: IST vs. SOLL
     /*
      * called after user changed select dropdowns
      */
-        function update() {
+    function update() {
       var hash = '#/'+$('#is-year').val()+'/';
       if ($('#is-drilldown').val() != '-') hash+=$('#is-drilldown').val()+'/';
       window.location.href = hash;
-        }
-        s.change(update);
+    }
     
-        var dd_meta = {};
+    s.change(update);
+    
+    var dd_meta = {};
         
-        /*
-         * load level 1 drilldown
-         */
+    /*
+     * load level 1 drilldown
+     */
     function load_l1() {
       _api('drilldown='+drilldowns[0]+'&order='+drilldowns[0]+'.label:asc', function(d) {
         // populate select
@@ -137,7 +136,7 @@ title: IST vs. SOLL
      * loads either A or B cut for level 2 drilldown
      */
     function load_l2(data, type) {
-    
+      // show preloader
       $('#is-vis').html('<div id="preloader"><img src="img/ajax-loader.gif" alt="" /> Lade Daten...</div>');
       var yr = $('#is-year').val(),
         ep = $('#is-drilldown').val(),
