@@ -72,7 +72,8 @@ title: IST vs. SOLL
     $.history.init(function(hash){
       if (hash != "") {
         // restore the state from hash
-        var m;
+        var m, sy = $('#is-year'), 
+        s1 = $('#is-drilldown-1'), s2 = $('#is-drilldown-2');
         m = hash.match(/\/(.+)\/(.+)\/(.+)\//)
         if (m === null) {
           m = hash.match(/\/(.+)\/(.+)\//);
@@ -85,12 +86,15 @@ title: IST vs. SOLL
             }
           }
         }
-        $('#is-year').val(m[1]);
-        $('#is-drilldown-1').val(m[2]);
-        $('#is-drilldown-1').data('sel', m[2]);
+        sy.val(m[1]);
+        s1.val(m[2]);
+        s1.data('sel', m[2]);
         if (m.length==4) {
-          $('#is-drilldown-2').val(m[3]);
-          $('#is-drilldown-2').data('sel', m[3]);
+          s2.val(m[3]);
+          s2.data('sel', m[3]);
+        } else {
+          s2.val('-');
+          s2.data('sel', '-');
         }
         run();
       }
@@ -203,7 +207,7 @@ title: IST vs. SOLL
           });
           if (s.data('sel')) s.val(s.data('sel'));
         }
-        run_vis(data);
+        run_vis(data, dd_x);
         
       }
     }
@@ -211,7 +215,7 @@ title: IST vs. SOLL
     /*
      * here's where the vis is put together. all jquery, this time..
      */
-    function run_vis(data) {
+    function run_vis(data, dd_x) {
       var v = $('#is-vis'), 
       width = v.width(),
       center, delta, odd = true, delay = 0, d_vel = 50,
@@ -219,7 +223,7 @@ title: IST vs. SOLL
       range = [0,0];
 
       $.each(data.meta, function(id, m) {
-        var row = { id: id, label: m.label };
+        var row = { id: id, label: m.label, name: m.name };
         row.url = endpoint + dataset + '/' + drilldowns[1] + '/' + m.name;
         row[AB[0]] = data[AB[0]][id];
         row[AB[1]] = data[AB[1]][id];
@@ -262,21 +266,31 @@ title: IST vs. SOLL
         l.data('url', row.url);
         l.data(AB[0], row[AB[0]]);
         l.data(AB[1], row[AB[1]]);
+        l.data('name', row.name);
+        l.data('lev', dd_x);
+        
         l.click(function(evt) {
-          var el = $(evt.target), A = el.data(AB[0]), B = el.data(AB[1]);
-          // show overlay with additional information
-          $.blockUI({ 
-            message: '<h2 style="line-height:1.2em;font-size:'
-              +(el.html().length > 80 ? 18 : el.html().length > 30 ? 21 : 24)
-              +'px;letter-spacing:-1px;margin-bottom:1em">'+el.html()+'</h2>'
-              +'<div style="margin-bottom:1em">'+AB[0]+': &nbsp;'+fmt_long(A)
-              +'<br />'+AB[1]+': &nbsp;'+fmt_long(B)
-              +'<br />Differenz: &nbsp;'+fmt(B-A)+(A!=0&&B!=0?' ('+fmt(Math.round(B/A*100)-100)+'%)':'')+'</div>'
-              +'<a href="'+el.data('url')+'" target="_blank">zu OpenSpending.org</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:$.unblockUI()">zurück</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', 
-            css: { padding: '2em', top:'20%', border: '3px solid #888', cursor: 'pointer' }, 
-            overlayCSS: { backgroundColor: '#777' } 
-          });
-          $('.blockOverlay').click($.unblockUI); 
+          var el = $(evt.target), dd_x = el.data('lev'), A = el.data(AB[0]), B = el.data(AB[1]);
+          if (dd_x == 2) {
+            // show overlay with additional information
+            $.blockUI({ 
+              message: '<h2 style="line-height:1.2em;font-size:'
+                +(el.html().length > 80 ? 18 : el.html().length > 30 ? 21 : 24)
+                +'px;letter-spacing:-1px;margin-bottom:1em">'+el.html()+'</h2>'
+                +'<div style="margin-bottom:1em">'+AB[0]+': &nbsp;'+fmt_long(A)
+                +'<br />'+AB[1]+': &nbsp;'+fmt_long(B)
+                +'<br />Differenz: &nbsp;'+fmt(B-A)+(A!=0&&B!=0?' ('+fmt(Math.round(B/A*100)-100)+'%)':'')+'</div>'
+                +'<a href="'+el.data('url')+'" target="_blank">zu OpenSpending.org</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:$.unblockUI()">zurück</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', 
+              css: { padding: '2em', top:'20%', border: '3px solid #888', cursor: 'pointer' }, 
+              overlayCSS: { backgroundColor: '#777' } 
+            });
+            $('.blockOverlay').click($.unblockUI); 
+          } else {
+            // navigate vis
+            var s = $('#is-drilldown-'+(dd_x+1)), nm = el.data('name');
+            s.val(nm);
+            update({target: s[0]});
+          }
         });
         
         r.addClass(row.diff > 0 ? 'passive' : 'active');
