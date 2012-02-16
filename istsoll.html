@@ -1,12 +1,10 @@
 ---
 layout: default
-title: IST–SOLL Vergleich
+title: IST vs. SOLL
 ---
-	
+  
 <script type="text/javascript">
 (function ($) {
-
-  window.wdmmg_cramap = {};
   
   var 
   endpoint = 'http://openspending.org/',
@@ -18,264 +16,290 @@ title: IST–SOLL Vergleich
   api_cache = {},
   top_flop_cnt = 10;
   
+  /*
+   * call openspending.org api
+   */
   function _api(params, callback) {
-		if (api_cache[params]) {
-			callback(api_cache[params]);
-			return;
-		}
-		$.ajax({
-			url: endpoint_api+'aggregate?dataset='+dataset+'&'+params,
-			dataType: 'jsonp',
-			success: function(content) {
-				api_cache[params] = content;
-				callback(content);
-			}
-		});
+    if (api_cache[params]) {
+      callback(api_cache[params]);
+      return;
+    }
+    $.ajax({
+      url: endpoint_api+'aggregate?dataset='+dataset+'&'+params,
+      dataType: 'jsonp',
+      success: function(content) {
+        api_cache[params] = content;
+        callback(content);
+      }
+    });
   }
   
+  /*
+   * format difference
+   */
   function fmt(diff) {
-	var a = Math.abs(diff);
-	if (a >= 1000000000) a = (Math.round(a/100000000)/10)+' Mrd.';
-	else if (a >= 1000000) a = (Math.round(a/100000)/10)+' Mio.';
-	else if (a >= 1000) a = (Math.round(a/100)/10)+' Tsd.';
-	return (diff > 0 ? '+' : diff == 0 ? '+/-' : '-')+a;
+  var a = Math.abs(diff);
+  if (a >= 1000000000) a = (Math.round(a/100000000)/10)+' Mrd.';
+  else if (a >= 1000000) a = (Math.round(a/100000)/10)+' Mio.';
+  else if (a >= 1000) a = (Math.round(a/100)/10)+' Tsd.';
+  return (diff > 0 ? '+' : diff == 0 ? '+/-' : '-')+a;
   }
   
+  /*
+   * format total value (used in overlay)
+   */
   function fmt_long(amount) {
-	var i,o='',a = String(Math.round(amount));
-	for (i=0; i<a.length; i++) {
-		if (i>0 && i%3==0) o='.'+o;
-		o=a[a.length-1-i]+o;
-	}
-	return '€ '+o+'';
+  var i,o='',a = String(Math.round(amount));
+  for (i=0; i<a.length; i++) {
+    if (i>0 && i%3==0) o='.'+o;
+    o=a[a.length-1-i]+o;
+  }
+  return '€ '+o+'';
   }  
   
+  /*
+   * initialize application (called after core js/css was loaded)
+   */
   function _init() {
         
+        // populate year select  
         var s = $('#is-year');
-        
-        $.each([2009,2008,2007,2006], function(i,yr) {
-        	s.append('<option>'+yr+'</option>');
+       $.each([2009,2008,2007,2006], function(i,yr) {
+          s.append('<option>'+yr+'</option>');
         });
         
         $('#is-drilldown').append('<option value="-">Übersicht</option>');
         
+        // configure jquery.history for hash url handling
         $.history.init(function(hash){
-			if (hash == "") {
-				// initialize your app
-			} else {
-				// restore the state from hash
-				var m = hash.match(/\/(.+)\/(.+)\//);
-				if (m === null) {
-					m = hash.match(/\/(.+)\//);
-					if (m !== null) m.push('-');
-					else {
-						$('#preloader').html('Unbekannte URL');
-						return;
-					}
-				}
-				$('#is-year').val(m[1]);
-				$('#is-drilldown').val(m[2]);
-				$('#is-drilldown').data('sel', m[2]);
-				run();
-			}
-		}, { unescape: ",/" });
-
-
-        function update() {
-			var hash = '#/'+$('#is-year').val()+'/';
-			if ($('#is-drilldown').val() != '-') hash+=$('#is-drilldown').val()+'/';
-			window.location.href = hash;
+      if (hash == "") {
+        // initialize your app
+      } else {
+        // restore the state from hash
+        var m = hash.match(/\/(.+)\/(.+)\//);
+        if (m === null) {
+          m = hash.match(/\/(.+)\//);
+          if (m !== null) m.push('-');
+          else {
+            $('#preloader').html('Unbekannte URL');
+            return;
+          }
         }
-        
+        $('#is-year').val(m[1]);
+        $('#is-drilldown').val(m[2]);
+        $('#is-drilldown').data('sel', m[2]);
+        run();
+      }
+    }, { unescape: ",/" });
+
+    /*
+     * called after user changed select dropdowns
+     */
+        function update() {
+      var hash = '#/'+$('#is-year').val()+'/';
+      if ($('#is-drilldown').val() != '-') hash+=$('#is-drilldown').val()+'/';
+      window.location.href = hash;
+        }
+        s.change(update);
+    
         var dd_meta = {};
         
-		function load_l1() {
-			_api('drilldown='+drilldowns[0]+'&order='+drilldowns[0]+'.label:asc', function(d) {
-				// populate select
-				$('#is-options').show();
-				s = $('#is-drilldown');
-				
-				$.each(d.drilldown, function(i, e) {
-					if (e.amount == 0) return;
-					s.append('<option value="'+e[drilldowns[0]].name+'">'+e[drilldowns[0]].label+'</option>');
-					dd_meta[e[drilldowns[0]].name] = e[drilldowns[0]].label;
-				});
-				if (s.data('sel')) s.val(s.data('sel'));
-				s.change(update);
-				run();
-			});
-		}
-		
-		function run() {
-			var data = {};
-			load_l2(data, AB[0]);
-			load_l2(data, AB[1]);
-		}
-		
-		s.change(update);
-		
-		function load_l2(data, type) {
-		
-			$('#is-vis').html('<div id="preloader"><img src="img/ajax-loader.gif" alt="" /> Lade Daten...</div>');
-			var yr = $('#is-year').val(),
-				ep = $('#is-drilldown').val(),
-				cut = 'year:'+yr+'|'+AB_dim+':'+type+'|flow:spending|'+drilldowns[0]+'.name:'+ep;
-			_api('drilldown='+drilldowns[1]+'&cut='+cut, function(d) {
-				data[type] = {};
-				data.meta = data.meta || {};
-				$.each(d.drilldown, function(i,e) {
-					data[type][e[drilldowns[1]].id] = e.amount;
-					data.meta[e[drilldowns[1]].id] = e[drilldowns[1]];
-					console.log(e);
-				});
-				data_loaded(data)
-			});
-		}
-		
-		function data_loaded(data) {
-			if (data[AB[0]] && data[AB[1]]) {
-				run_vis(data);
-			}
-		}
-		
-		function run_vis(data) {
-			var v = $('#is-vis'), 
-			width = v.width(),
-			center, delta, odd = true, delay = 0, d_vel = 50,
-			rows = [], 
-			range = [0,0];
+        /*
+         * load level 1 drilldown
+         */
+    function load_l1() {
+      _api('drilldown='+drilldowns[0]+'&order='+drilldowns[0]+'.label:asc', function(d) {
+        // populate select
+        $('#is-options').show();
+        s = $('#is-drilldown');
+        
+        $.each(d.drilldown, function(i, e) {
+          if (e.amount == 0) return;
+          s.append('<option value="'+e[drilldowns[0]].name+'">'+e[drilldowns[0]].label+'</option>');
+          dd_meta[e[drilldowns[0]].name] = e[drilldowns[0]].label;
+        });
+        if (s.data('sel')) s.val(s.data('sel'));
+        s.change(update);
+        run();
+      });
+    }
+    
+    /*
+     * load A/B cuts for level 2 drilldown
+     */
+    function run() {
+      var data = {};
+      load_l2(data, AB[0]);
+      load_l2(data, AB[1]);
+    }
+    
+    /*
+     * loads either A or B cut for level 2 drilldown
+     */
+    function load_l2(data, type) {
+    
+      $('#is-vis').html('<div id="preloader"><img src="img/ajax-loader.gif" alt="" /> Lade Daten...</div>');
+      var yr = $('#is-year').val(),
+        ep = $('#is-drilldown').val(),
+        cut = 'year:'+yr+'|'+AB_dim+':'+type+'|flow:spending|'+drilldowns[0]+'.name:'+ep;
+      _api('drilldown='+drilldowns[1]+'&cut='+cut, function(d) {
+        data[type] = {};
+        data.meta = data.meta || {};
+        $.each(d.drilldown, function(i,e) {
+          data[type][e[drilldowns[1]].id] = e.amount;
+          data.meta[e[drilldowns[1]].id] = e[drilldowns[1]];
+          console.log(e);
+        });
+        data_loaded(data)
+      });
+    }
+    
+    /*
+     * checks if both A and B are loaded, runs vis if true
+     */
+    function data_loaded(data) {
+      if (data[AB[0]] && data[AB[1]]) {
+        run_vis(data);
+      }
+    }
+    
+    /*
+     * here's where the vis is put together. all jquery, this time..
+     */
+    function run_vis(data) {
+      var v = $('#is-vis'), 
+      width = v.width(),
+      center, delta, odd = true, delay = 0, d_vel = 50,
+      rows = [], 
+      range = [0,0];
 
-			$.each(data.meta, function(id, m) {
-				var row = { id: id, label: m.label };
-				row.url = endpoint + dataset + '/' + drilldowns[1] + '/' + m.name;
-				row[AB[0]] = data[AB[0]][id];
-				row[AB[1]] = data[AB[1]][id];
-				row.diff = row[AB[1]]-row[AB[0]];
-				if (!isNaN(row.diff) && !(row[AB[0]] == 0 && row[AB[1]] == 0)) {
-					range[0] = Math.min(range[0], row.diff);
-					range[1] = Math.max(range[1], row.diff);
-					rows.push(row);				
-				}		
-			});
-			
-			if (rows.length == 0) {
-				$('#preloader').html('Konnte keine Differenzen berechnen..');
-				return;
-			}
-			
-			v.html('<h2>'+dd_meta[$('#is-drilldown').val()]+'</h2>');
-			
-			rows.sort(function(a,b) {
-				return b.diff-a.diff;
-			});
-			delta = range[1]-range[0];
-			center = width*0.2 + (width*0.6) * Math.abs(range[0]) / delta;
-			if (delta == 0) center = width*0.5;
-			
-			// now visualize
-			$.each(rows, function(i,row) {
-				
-				var 
-				r = $('<div class="is-row" />'),
-				b = $('<div class="bar" />'),
-				l = $('<div class="lbl title" title="'+row.label+'">'+row.label+'</div>'),
-				d = $('<div class="lbl diff">'+fmt(row.diff)+'</div>'),
-				w = Math.max(1,Math.abs(row.diff / delta)*width*0.75);
-				
-				l.data('url', row.url);
-				l.data(AB[0], row[AB[0]]);
-				l.data(AB[1], row[AB[1]]);
-				l.click(function(evt) {
-					var el = $(evt.target), A = el.data(AB[0]), B = el.data(AB[1]);
-					$.blockUI({ 
-						message: '<h2 style="line-height:1.2em;font-size:'
-							+(el.html().length > 80 ? 18 : el.html().length > 30 ? 21 : 24)
-							+'px;letter-spacing:-1px;margin-bottom:1em">'+el.html()+'</h2>'
-							+'<div style="margin-bottom:1em">'+AB[0]+': &nbsp;'+fmt_long(A)
-							+'<br />'+AB[1]+': &nbsp;'+fmt_long(B)
-							+'<br />Differenz: &nbsp;'+fmt(B-A)+(A!=0&&B!=0?' ('+fmt(Math.round(B/A*100)-100)+'%)':'')+'</div>'
-							+'<a href="'+el.data('url')+'" target="_blank">zu OpenSpending.org</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:$.unblockUI()">zurück</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', 
-						css: { padding: '2em', top:'20%', cursor: 'pointer' }, 
-						overlayCSS: { backgroundColor: '#777' } 
-					});
-					$('.blockOverlay').click($.unblockUI); 
-				});
-				
-				r.addClass(row.diff > 0 ? 'passive' : 'active');
-				if (odd) r.addClass('odd');
-				if (!((i < top_flop_cnt) || (i >= rows.length - top_flop_cnt))) {
-					r.addClass('hide');
-					if (i == top_flop_cnt) {
-						var exp = $('<div class="row-exp">Zeige '+(rows.length - top_flop_cnt*2)+' weitere Haushaltsposten</div>');
-						v.append(exp);
-						exp.hide();
-						exp.click(function() {
-							exp.hide();
-							$('.is-row.hide').show();
-						});
-						exp.delay(delay).show(200);
-						delay += d_vel;
-					}
-				}
-				
-				odd = !odd;
-				
-				if (delta == 0) w = 1;
-				
-				r.append(l);
-				r.append(b);
-				r.append(d);
-				r.hide();
-				
-				if (!r.hasClass('hide')) {
-					r.delay(delay).show(d_vel > 0 ? 250 : 0);
-					delay += d_vel;
-					d_vel *= 0.97;
-				}
-				v.append(r);
+      $.each(data.meta, function(id, m) {
+        var row = { id: id, label: m.label };
+        row.url = endpoint + dataset + '/' + drilldowns[1] + '/' + m.name;
+        row[AB[0]] = data[AB[0]][id];
+        row[AB[1]] = data[AB[1]][id];
+        row.diff = row[AB[1]]-row[AB[0]];
+        if (!isNaN(row.diff) && !(row[AB[0]] == 0 && row[AB[1]] == 0)) {
+          range[0] = Math.min(range[0], row.diff);
+          range[1] = Math.max(range[1], row.diff);
+          rows.push(row);        
+        }    
+      });
+      
+      if (rows.length == 0) {
+        $('#preloader').html('Konnte keine Differenzen berechnen..');
+        return;
+      }
+      
+      v.html('<h2>'+dd_meta[$('#is-drilldown').val()]+'</h2>');
+      
+      rows.sort(function(a,b) {
+        return b.diff-a.diff;
+      });
+      delta = range[1]-range[0];
+      center = width*0.2 + (width*0.6) * Math.abs(range[0]) / delta;
+      if (delta == 0) center = width*0.5;
+      
+      // now visualize
+      $.each(rows, function(i,row) {
+        var 
+        r = $('<div class="is-row" />'),
+        b = $('<div class="bar" />'),
+        l = $('<div class="lbl title" title="'+row.label+'">'+row.label+'</div>'),
+        d = $('<div class="lbl diff">'+fmt(row.diff)+'</div>'),
+        w = Math.max(1,Math.abs(row.diff / delta)*width*0.75);
+        
+        l.data('url', row.url);
+        l.data(AB[0], row[AB[0]]);
+        l.data(AB[1], row[AB[1]]);
+        l.click(function(evt) {
+          var el = $(evt.target), A = el.data(AB[0]), B = el.data(AB[1]);
+          // show overlay with additional information
+          $.blockUI({ 
+            message: '<h2 style="line-height:1.2em;font-size:'
+              +(el.html().length > 80 ? 18 : el.html().length > 30 ? 21 : 24)
+              +'px;letter-spacing:-1px;margin-bottom:1em">'+el.html()+'</h2>'
+              +'<div style="margin-bottom:1em">'+AB[0]+': &nbsp;'+fmt_long(A)
+              +'<br />'+AB[1]+': &nbsp;'+fmt_long(B)
+              +'<br />Differenz: &nbsp;'+fmt(B-A)+(A!=0&&B!=0?' ('+fmt(Math.round(B/A*100)-100)+'%)':'')+'</div>'
+              +'<a href="'+el.data('url')+'" target="_blank">zu OpenSpending.org</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:$.unblockUI()">zurück</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', 
+            css: { padding: '2em', top:'20%', cursor: 'pointer' }, 
+            overlayCSS: { backgroundColor: '#777' } 
+          });
+          $('.blockOverlay').click($.unblockUI); 
+        });
+        
+        r.addClass(row.diff > 0 ? 'passive' : 'active');
+        if (odd) r.addClass('odd');
+        if (!((i < top_flop_cnt) || (i >= rows.length - top_flop_cnt))) {
+          r.addClass('hide');
+          if (i == top_flop_cnt) {
+            var exp = $('<div class="row-exp">Zeige '+(rows.length - top_flop_cnt*2)+' weitere Haushaltsposten</div>');
+            v.append(exp);
+            exp.hide();
+            exp.click(function() {
+              exp.hide();
+              $('.is-row.hide').show();
+            });
+            exp.delay(delay).show(200);
+            delay += d_vel;
+          }
+        }
+        
+        odd = !odd;
+        
+        if (delta == 0) w = 1;
+        
+        r.append(l);
+        r.append(b);
+        r.append(d);
+        r.hide();
+        
+        if (!r.hasClass('hide')) {
+          // animate visible rows
+          r.delay(delay).show(d_vel > 0 ? 250 : 0);
+          delay += d_vel;
+          d_vel *= 0.97;
+        }
+        v.append(r);
 
-				l.css(row.diff > 0 ? 
-					{ right: (width-center)+'px', width: center+'px' } : 
-					{ left: center+'px', width: (center-width)+'px' });
-				d.css(row.diff > 0 ? { left: (center+w)+'px' } : { right: (width-center+w)+'px' } );
-				b.css(row.diff < 0 ? { right: (width-center)+'px' } : { left: center+'px' });
-				b.css({ width: w+'px' });
-			});
-		}
-		
-		load_l1();
-     }
+        l.css(row.diff > 0 ? 
+          { right: (width-center)+'px', width: center+'px' } : 
+          { left: center+'px', width: (center-width)+'px' });
+        d.css(row.diff > 0 ? { left: (center+w)+'px' } : { right: (width-center+w)+'px' } );
+        b.css(row.diff < 0 ? { right: (width-center)+'px' } : { left: center+'px' });
+        b.css({ width: w+'px' });
+      });
+    }
+    // initally load level 1 drop downs
+    load_l1();
+  }
   
+  // don't wait too long for libraries
   yepnope.errorTimeout = 1000;
 
+  // load js scripts add css assets
   yepnope([
- // { load: 'http://assets.openspending.org/openspendingjs/master/lib/vendor/raphael-min.js' },	
- // { load: 'http://assets.openspending.org/openspendingjs/master/lib/aggregator.js' },	
- // { load: 'css/tooltips.css' },
- // { load: 'js/libs/jquery.qtip.min.js' }
-    { load: 'http://assets.openspending.org/openspendingjs/master/lib/vendor/jquery.history.js' },	
+    { load: 'http://assets.openspending.org/openspendingjs/master/lib/vendor/jquery.history.js' },  
     { load: 'css/istsoll.css', complete: _init },
     { load: 'http://assets.openspending.org/openspendingjs/master/lib/vendor/jquery.blockUI-2.31.js' }
-   ]);
-   
-    
+  ]); 
   
 })(jQuery)
 </script>
     
     
 <div id="istsoll">
-	<div id="is-head">
-		<div id="is-options" style="display:none">
-			Jahr <select id="is-year"></select>
-			Einzelplan <select id="is-drilldown"></select>
-		</div>
-		<h1>IST vs. SOLL</h1>
-		<div id="is-vis">
-			<div id="preloader"><img src="img/ajax-loader.gif" alt="" /> Lade Daten...</div>
-		</div>
-	</div>
+  <div id="is-head">
+    <div id="is-options" style="display:none">
+      Jahr <select id="is-year"></select>
+      Einzelplan <select id="is-drilldown"></select>
+    </div>
+    <h1>IST vs. SOLL</h1>
+    <div id="is-vis">
+      <div id="preloader"><img src="img/ajax-loader.gif" alt="" /> Lade Daten...</div>
+    </div>
+  </div>
 
 </div><!-- /#istsoll -->
 
