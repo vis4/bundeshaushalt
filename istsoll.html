@@ -244,12 +244,11 @@ title: IST vs. SOLL
       }
       
       var dd2 = $('#is-drilldown-2').val();
-      if (dd2 !== null && dd2[0] != '-') {
-        v.html('<h2>'+dd_meta[dd2]+'</h2>');
-      } else {
-        v.html('<h2>'+dd_meta[$('#is-drilldown-1').val()]+'</h2>');
-      }
       
+      v.html('<h2>'+dd_meta[$('#is-drilldown-1').val()]+'</h2>');
+      if (dd2 !== null && dd2[0] != '-') {
+        v.append('<h3>'+dd_meta[dd2]+'</h3>');
+	  }      
       rows.sort(function(a,b) {
         return b.diff-a.diff;
       });
