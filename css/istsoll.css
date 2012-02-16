@@ -74,6 +74,16 @@
 	line-height: 25px;
 }
 
+#is-vis .is-row .lbl a {
+	color: #000;
+	text-decoration: none;
+}
+
+#is-vis .is-row .lbl a:hover {
+	color: #830242;
+}
+
+
 #is-vis .is-row .bar {
 	position: absolute;
 	top: 5px;

@@ -9,7 +9,8 @@ title: IST–SOLL Vergleich
   window.wdmmg_cramap = {};
   
   var 
-  endpoint = 'http://openspending.org/api/2/',
+  endpoint = 'http://openspending.org/',
+  endpoint_api = endpoint + 'api/2/',
   dataset = 'de-bund',
   drilldowns = ['einzelplan','titel'],
   AB_dim = 'financial_type',
@@ -23,7 +24,7 @@ title: IST–SOLL Vergleich
 			return;
 		}
 		$.ajax({
-			url: endpoint+'aggregate?dataset='+dataset+'&'+params,
+			url: endpoint_api+'aggregate?dataset='+dataset+'&'+params,
 			dataType: 'jsonp',
 			success: function(content) {
 				api_cache[params] = content;
@@ -117,6 +118,7 @@ title: IST–SOLL Vergleich
 				$.each(d.drilldown, function(i,e) {
 					data[type][e[drilldowns[1]].id] = e.amount;
 					data.meta[e[drilldowns[1]].id] = e[drilldowns[1]];
+					console.log(e);
 				});
 				data_loaded(data)
 			});
@@ -137,6 +139,7 @@ title: IST–SOLL Vergleich
 
 			$.each(data.meta, function(id, m) {
 				var row = { id: id, label: m.label };
+				row.url = endpoint + dataset + '/' + drilldowns[1] + '/' + m.name;
 				row[AB[0]] = data[AB[0]][id];
 				row[AB[1]] = data[AB[1]][id];
 				row.diff = row[AB[1]]-row[AB[0]];
@@ -175,7 +178,7 @@ title: IST–SOLL Vergleich
 				var 
 				r = $('<div class="is-row" />'),
 				b = $('<div class="bar" />'),
-				l = $('<div class="lbl" title="'+row.label+'">'+row.label+'</div>'),
+				l = $('<div class="lbl" title="'+row.label+'"><a href="'+row.url+'" target="_blank">'+row.label+'</a></div>'),
 				d = $('<div class="lbl diff">'+fmt(row.diff)+'</div>'),
 				w = Math.max(1,Math.abs(row.diff / delta)*width*0.75);
 				
