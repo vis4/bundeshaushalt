@@ -11,6 +11,7 @@ title: IST vs. SOLL
   endpoint_api = endpoint + 'api/2/',
   dataset = 'de-bund',
   drilldowns = ['einzelplan','kapitel','titel'],
+  //drilldowns = ['funktion','hauptfunktion','oberfunktion'],
   AB_dim = 'financial_type',
   AB = ['Ansatz', 'Ist'],
   api_cache = {},
@@ -136,6 +137,7 @@ title: IST vs. SOLL
           s.append('<option value="'+e[drilldowns[0]].name+'">'+e[drilldowns[0]].label+'</option>');
           dd_meta[e[drilldowns[0]].name] = e[drilldowns[0]].label;
         });
+        s.trigger("liszt:updated");
         if (s.data('sel')) s.val(s.data('sel'));
         s.change(update);
         run();
@@ -205,6 +207,7 @@ title: IST vs. SOLL
             s.append('<option value="'+m.name+'">'+m.label+'</option>');
             dd_meta[m.name] = m.label;
           });
+          s.trigger("liszt:updated");
           if (s.data('sel')) s.val(s.data('sel'));
         }
         run_vis(data, dd_x);
@@ -346,6 +349,10 @@ title: IST vs. SOLL
   yepnope([
     { load: 'http://assets.openspending.org/openspendingjs/master/lib/vendor/jquery.history.js' },  
     { load: 'css/istsoll.css', complete: _init },
+    { load: 'css/chosen.css' },
+    { load: 'js/libs/chosen.jquery.min.js', complete: function() {
+      $('select').chosen();
+    }},
     { load: 'http://assets.openspending.org/openspendingjs/master/lib/vendor/jquery.blockUI-2.31.js' }
   ]); 
   
@@ -356,9 +363,9 @@ title: IST vs. SOLL
 <div id="istsoll">
   <div id="is-head">
     <div id="is-options" style="display:none">
-      Jahr <select id="is-year"></select>
-      Einzelplan <select id="is-drilldown-1"></select>
-      Kapitel <select id="is-drilldown-2"></select>
+      <label for="is-year">Jahr</label> <select id="is-year"></select>
+      <label for="is-drilldown-1">Einzelplan</label> <select id="is-drilldown-1"></select>
+      <label for="is-drilldown-2">Kapitel</label> <select id="is-drilldown-2"></select>
     </div>
     <h1>IST vs. SOLL</h1>
     <div id="is-vis">
