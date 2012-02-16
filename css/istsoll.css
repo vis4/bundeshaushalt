@@ -40,7 +40,23 @@
 #is-vis h3 {
 	text-align: center;
 	clear: both;
-	margin: -1.5em 0 1.5em;
+	margin: -1.5em 0 1em;
+}
+
+#is-vis .legend {
+	font-family: Palatino, Georgia, serif;
+	font-style: italic;
+	font-size: 15px;
+	margin: 0 2em 0.5em;
+}
+
+#is-vis .legend .passive {
+	float: right;
+	color: #9F3D3F;
+}
+
+#is-vis .legend .active {
+	color: #517552;
 }
 
 #is-vis #preloader {
