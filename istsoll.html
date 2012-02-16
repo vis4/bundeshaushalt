@@ -224,7 +224,7 @@ title: IST vs. SOLL
 
       $.each(data.meta, function(id, m) {
         var row = { id: id, label: m.label, name: m.name };
-        row.url = endpoint + dataset + '/' + drilldowns[1] + '/' + m.name;
+        row.url = endpoint + dataset + '/' + drilldowns[dd_x] + '/' + m.name;
         row[AB[0]] = data[AB[0]][id];
         row[AB[1]] = data[AB[1]][id];
         row.diff = row[AB[1]]-row[AB[0]];
