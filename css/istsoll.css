@@ -74,12 +74,11 @@
 	line-height: 25px;
 }
 
-#is-vis .is-row .lbl a {
-	color: #000;
-	text-decoration: none;
+#is-vis .is-row .lbl.title {
+	cursor: pointer;
 }
 
-#is-vis .is-row .lbl a:hover {
+#is-vis .is-row .lbl.title:hover {
 	color: #830242;
 }
 
