@@ -5,8 +5,13 @@
 	margin-bottom: 2.5em;
 }
 
-#is-drilldown {
-	width: 300px;
+#is-drilldown-1 {
+	width: 150px;
+	margin-right: 1em;
+}
+
+#is-drilldown-2 {
+	width: 150px;
 }
 
 #is-year {

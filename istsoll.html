@@ -10,7 +10,7 @@ title: IST vs. SOLL
   endpoint = 'http://openspending.org/',
   endpoint_api = endpoint + 'api/2/',
   dataset = 'de-bund',
-  drilldowns = ['einzelplan','titel'],
+  drilldowns = ['einzelplan','kapitel','titel'],
   AB_dim = 'financial_type',
   AB = ['Ansatz', 'Ist'],
   api_cache = {},
@@ -68,24 +68,30 @@ title: IST vs. SOLL
       s.append('<option>'+yr+'</option>');
     });
         
-    $('#is-drilldown').append('<option value="-">Übersicht</option>');
-        
     // configure jquery.history for hash url handling
     $.history.init(function(hash){
       if (hash != "") {
         // restore the state from hash
-        var m = hash.match(/\/(.+)\/(.+)\//);
+        var m;
+        m = hash.match(/\/(.+)\/(.+)\/(.+)\//)
         if (m === null) {
-          m = hash.match(/\/(.+)\//);
-          if (m !== null) m.push('-');
-          else {
-            $('#preloader').html('Unbekannte URL');
-            return;
+          m = hash.match(/\/(.+)\/(.+)\//);
+          if (m === null) {
+            m = hash.match(/\/(.+)\//);
+            if (m !== null) m.push('-');
+            else {
+              $('#preloader').html('Unbekannte URL');
+              return;
+            }
           }
         }
         $('#is-year').val(m[1]);
-        $('#is-drilldown').val(m[2]);
-        $('#is-drilldown').data('sel', m[2]);
+        $('#is-drilldown-1').val(m[2]);
+        $('#is-drilldown-1').data('sel', m[2]);
+        if (m.length==4) {
+          $('#is-drilldown-2').val(m[3]);
+          $('#is-drilldown-2').data('sel', m[3]);
+        }
         run();
       }
     }, { unescape: ",/" });
@@ -93,15 +99,23 @@ title: IST vs. SOLL
     /*
      * called after user changed select dropdowns
      */
-    function update() {
-      var hash = '#/'+$('#is-year').val()+'/';
-      if ($('#is-drilldown').val() != '-') hash+=$('#is-drilldown').val()+'/';
+    function update(evt) {
+      var hash = '#/'+$('#is-year').val()+'/', 
+        s1 = $('#is-drilldown-1'), s2 = $('#is-drilldown-2'),
+        d1 = s1.val(), d2 = s2.val();
+      if (evt.target.id == 'is-drilldown-1') {
+        d2 = '-';
+        s2.val('-');
+      }
+      if (d1 != '-') hash+= d1+'/';
+      if (d2 != '-') hash+= d2+'/';
+      
       window.location.href = hash;
     }
     
     s.change(update);
     
-    var dd_meta = {};
+    var dd_meta = { '-': 'Übersicht' };
         
     /*
      * load level 1 drilldown
@@ -110,7 +124,8 @@ title: IST vs. SOLL
       _api('drilldown='+drilldowns[0]+'&order='+drilldowns[0]+'.label:asc', function(d) {
         // populate select
         $('#is-options').show();
-        s = $('#is-drilldown');
+        s = $('#is-drilldown-1');
+        s.append('<option value="-">(Übersicht)</option>');
         
         $.each(d.drilldown, function(i, e) {
           if (e.amount == 0) return;
@@ -120,6 +135,8 @@ title: IST vs. SOLL
         if (s.data('sel')) s.val(s.data('sel'));
         s.change(update);
         run();
+        
+        $('#is-drilldown-2').change(update);
       });
     }
     
@@ -139,26 +156,55 @@ title: IST vs. SOLL
       // show preloader
       $('#is-vis').html('<div id="preloader"><img src="img/ajax-loader.gif" alt="" /> Lade Daten...</div>');
       var yr = $('#is-year').val(),
-        ep = $('#is-drilldown').val(),
-        cut = 'year:'+yr+'|'+AB_dim+':'+type+'|flow:spending|'+drilldowns[0]+'.name:'+ep;
-      _api('drilldown='+drilldowns[1]+'&cut='+cut, function(d) {
+        ep = $('#is-drilldown-1').val(),
+        kp = $('#is-drilldown-2').val(),
+        cut = 'year:'+yr+'|'+AB_dim+':'+type+'|flow:spending'
+        dd_x = 1;
+        
+      if (ep == '-') dd_x = 0;
+      else {
+        cut += '|'+drilldowns[0]+'.name:'+ep;
+        if (kp == '-') {
+          dd_x = 1;
+          cut += '&order='+drilldowns[1]+'.name:asc';
+        } else if (kp == '-all-') {
+          dd_x = 2;
+        } else if (kp !== null) {
+          dd_x = 2;
+          cut += '|'+drilldowns[1]+'.name:'+kp;
+        }
+      }
+      
+      _api('drilldown='+drilldowns[dd_x]+'&cut='+cut, function(d) {
         data[type] = {};
         data.meta = data.meta || {};
         $.each(d.drilldown, function(i,e) {
-          data[type][e[drilldowns[1]].id] = e.amount;
-          data.meta[e[drilldowns[1]].id] = e[drilldowns[1]];
-          console.log(e);
+          data[type][e[drilldowns[dd_x]].id] = e.amount;
+          data.meta[e[drilldowns[dd_x]].id] = e[drilldowns[dd_x]];
         });
-        data_loaded(data)
+        data_loaded(data, dd_x)
       });
     }
     
     /*
      * checks if both A and B are loaded, runs vis if true
      */
-    function data_loaded(data) {
+    function data_loaded(data, dd_x) {
       if (data[AB[0]] && data[AB[1]]) {
+        var s = $('#is-drilldown-2');
+        if (dd_x == 0) s.html('');
+        else if (dd_x == 1) {
+          s.html('');
+          s.append('<option value="-">(Übersicht)</option>');
+          s.append('<option value="-all-">(Alle)</option>');
+          $.each(data.meta, function(id, m) {
+            s.append('<option value="'+m.name+'">'+m.label+'</option>');
+            dd_meta[m.name] = m.label;
+          });
+          if (s.data('sel')) s.val(s.data('sel'));
+        }
         run_vis(data);
+        
       }
     }
     
@@ -190,7 +236,12 @@ title: IST vs. SOLL
         return;
       }
       
-      v.html('<h2>'+dd_meta[$('#is-drilldown').val()]+'</h2>');
+      var dd2 = $('#is-drilldown-2').val();
+      if (dd2 !== null && dd2[0] != '-') {
+        v.html('<h2>'+dd_meta[dd2]+'</h2>');
+      } else {
+        v.html('<h2>'+dd_meta[$('#is-drilldown-1').val()]+'</h2>');
+      }
       
       rows.sort(function(a,b) {
         return b.diff-a.diff;
@@ -222,7 +273,7 @@ title: IST vs. SOLL
               +'<br />'+AB[1]+': &nbsp;'+fmt_long(B)
               +'<br />Differenz: &nbsp;'+fmt(B-A)+(A!=0&&B!=0?' ('+fmt(Math.round(B/A*100)-100)+'%)':'')+'</div>'
               +'<a href="'+el.data('url')+'" target="_blank">zu OpenSpending.org</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:$.unblockUI()">zurück</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', 
-            css: { padding: '2em', top:'20%', cursor: 'pointer' }, 
+            css: { padding: '2em', top:'20%', border: '3px solid #888', cursor: 'pointer' }, 
             overlayCSS: { backgroundColor: '#777' } 
           });
           $('.blockOverlay').click($.unblockUI); 
@@ -292,7 +343,8 @@ title: IST vs. SOLL
   <div id="is-head">
     <div id="is-options" style="display:none">
       Jahr <select id="is-year"></select>
-      Einzelplan <select id="is-drilldown"></select>
+      Einzelplan <select id="is-drilldown-1"></select>
+      Kapitel <select id="is-drilldown-2"></select>
     </div>
     <h1>IST vs. SOLL</h1>
     <div id="is-vis">
