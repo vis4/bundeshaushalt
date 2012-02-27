@@ -331,8 +331,8 @@ title: IST vs. SOLL
         v.append(r);
 
         l.css(row.diff > 0 ? 
-          { right: (width-center)+'px', width: center+'px' } : 
-          { left: center+'px', width: (center-width)+'px' });
+          { right: (width-center)+'px', width: (center-40)+'px' } : 
+          { left: center+'px', width: (center-width-40)+'px' });
         d.css(row.diff > 0 ? { left: (center+w)+'px' } : { right: (width-center+w)+'px' } );
         b.css(row.diff < 0 ? { right: (width-center)+'px' } : { left: center+'px' });
         b.css({ width: w+'px' });
@@ -362,16 +362,16 @@ title: IST vs. SOLL
     
 <div id="istsoll">
   <div id="is-head">
+   <h1>IST vs. SOLL</h1>
     <div id="is-options" style="display:none">
       <label for="is-year">Jahr</label> <select id="is-year"></select>
       <label for="is-drilldown-1">Einzelplan</label> <select id="is-drilldown-1"></select>
       <label for="is-drilldown-2">Kapitel</label> <select id="is-drilldown-2"></select>
     </div>
-    <h1>IST vs. SOLL</h1>
-    <div id="is-vis">
-      <div id="preloader"><img src="img/ajax-loader.gif" alt="" /> Lade Daten...</div>
-    </div>
+   
   </div>
-
+  <div id="is-vis">
+    <div id="preloader"><img src="img/ajax-loader.gif" alt="" /> Lade Daten...</div>
+  </div>
 </div><!-- /#istsoll -->
 
